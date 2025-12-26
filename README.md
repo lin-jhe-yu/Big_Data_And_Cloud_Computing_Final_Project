@@ -7,12 +7,11 @@
 
 Restaurant closures represent a significant economic and operational risk in the U.S. food services industry. With **17–30% of restaurants failing in their first year** and nearly **50% closing within five years**, operators, investors, and cities face substantial losses from sunk capital, disrupted employment, and weakened neighborhood ecosystems. Although online reviews influence **90% of customers**, they are seldom used in a structured, decision-focused manner.
 
-### Estimated Business Impact
+### Business Impact
 
 This project shows how advanced analytics can convert existing data into **tangible business value**:
 
 * **Earlier intervention:** A high-performing closure prediction model (**AUC ≈ 0.97**) enables stakeholders to identify at-risk restaurants well before permanent shutdown, creating time for corrective action.
-* **Financial loss mitigation:** Achieving even a **5–10% reduction in closure rates** in major urban markets could result in **millions of dollars annually** in avoided losses from lease defaults, rehiring costs, and failed capital investments.
 * **Higher success rates for new openings:** Location and neighborhood analysis improves site selection decisions, increasing the likelihood of long-term survival in competitive markets.
 * **Operational performance gains:** Benchmarking against features present in **75%+ of high-performing restaurants** provides a clear, data-backed playbook for improving resilience and customer appeal.
 
@@ -31,6 +30,14 @@ Applied across **California, New York, and Illinois**, the solution supports:
 * **Urban planners and analysts** monitoring commercial stability at the neighborhood level
 
 Overall, the platform shifts decision-making from reactive responses to closures toward **proactive, data-driven risk management and growth strategy**.
+
+### Technical Overview
+
+* **Data Storage & Processing:** Google Cloud Storage (GCS)  
+* **Scalable Data Pipelines:** PySpark for ingestion and transformation  
+* **Machine Learning:** Spark MLlib for predictive modeling  
+* **Text & Sentiment Analysis:** Transformer-based models (BERT) for processing customer reviews  
+* **Graph Analytics:** Assessing neighborhood networks, competitive pressure, and ecosystem health  
 
 ---
 
@@ -57,7 +64,7 @@ We address three core questions:
 
   * ~1 GB business metadata
   * ~39 GB review text data
-  * Over **92K restaurants** and **29M+ reviews** in California alone
+  * Over **171K restaurants** and **52M+ reviews** processed for analysis.  
 
 **Why this matters:** The volume and diversity of data require scalable engineering solutions and ensure findings reflect real market conditions rather than small-sample bias.
 
@@ -68,8 +75,7 @@ We address three core questions:
 ### 1. Reviews Matter — But Not in the Obvious Way
 
 * Average star rating has **more influence on survival** than raw sentiment alone
-* Review length shows **little predictive power** despite closed restaurants having longer reviews
-* The *presence and consistency* of feedback is more informative than verbosity
+* Many closed restaurants share operational issues, such as slow serving speed
 
 ### 2. Pricing Strategy Impacts Risk
 
@@ -98,39 +104,74 @@ These features appear in **75%+ of well-performing businesses**, making them str
 
 ### 1. Sentiment Modeling (Customer Voice at Scale)
 
-**Business goal:** Convert millions of unstructured reviews into reliable business-level signals.
+**Business goal:** Convert millions of unstructured customer reviews into **1 to 5 sentiment scores**.  
 
 * Implemented using **PySpark** for scalability
 * Data preparation:
 
   * Removed duplicates
   * Filtered to English-language reviews
-* Models evaluated:
+    
+**Sentiment Score Prediction Models:**  
+We evaluated several predictive models using **TF-IDF** features and **BERT embeddings** (`small_bert_L4_512`). Customer review ratings were used as a proxy for sentiment scores. Model performance was assessed using standard metrics: **RMSE**, **MAE**, and **R²**.  
 
-  * Linear Regression
-  * Random Forest Regressor
-  * Gradient Boosted Trees Regressor
-  * Lightweight BERT (`small_bert_L4_512`, R² ≈ 0.51)
+| Model Type               | Feature Type | RMSE  | MAE  | R²   |
+|---------------------------|-------------|-------|------|------|
+| **Linear Regression**     | TF-IDF      | 0.99  | 0.75 | 0.40 |
+|                           | BERT        | 0.89  | 0.67 | 0.51 |
+| **Gradient Boosted Trees**| TF-IDF      | 1.03  | 0.78 | 0.34 |
+|                           | BERT        | 0.94  | 0.67 | 0.46 |
+| **Random Forest Regressor** | TF-IDF    | 1.13  | 0.89 | 0.21 |
+|                           | BERT        | 1.00  | 0.77 | 0.39 |
+
+> **Key Insight:** BERT embeddings consistently outperform TF-IDF features, capturing richer semantic context. The **Linear Regression + BERT** model achieved the highest R² (**0.51**), making it the best performing model for sentiment score prediction.
+
 
 **Why this approach:** Lightweight BERT balances interpretability, cost, and performance for large-scale deployment.
 
 ---
 
-### 2. Restaurant Closure Prediction (Early Risk Detection)
+## 2. Restaurant Closure Prediction (Early Risk Detection)
 
-**Business goal:** Predict the probability that a restaurant will permanently close.
+**Business Goal:** Predict the probability that a restaurant will permanently close, enabling proactive intervention months before closure.
 
-* Feature groups:
+### Feature Groups
+- **Operational attributes:** Amenities, dining options
+- **Customer feedback metrics:** Ratings, sentiment score, review volume
+- **Pricing and population context**
 
-  * Operational attributes (amenities, dining options)
-  * Customer feedback metrics (ratings, sentiment, review volume)
-  * Pricing and population context
-* Best model:
+### Model Performance
 
-  * **Gradient Boosted Trees (GBT)**
-  * **AUC ≈ 0.97**
+| Model                        | AUC  | Accuracy | F1 Score | Precision | Recall |
+|-------------------------------|------|---------|----------|-----------|--------|
+| Logistic Regression           | 0.96 | 0.89    | 0.90     | 0.93      | 0.89   |
+| Gradient Boosted Trees (GBT)  | 0.97 | 0.91    | 0.92     | 0.94      | 0.91   |
+| Random Forest                 | 0.97 | 0.91    | 0.92     | 0.94      | 0.91   |
 
-**Interpretation:** The model can reliably distinguish high-risk vs. low-risk restaurants, enabling proactive intervention months before closure.
+**Best Model:** Gradient Boosted Trees (GBT) — **AUC ≈ 0.97**
+
+### Feature Importance (GBT)
+
+| Feature                                      | GBT Importance | Effect Direction               |
+|---------------------------------------------|----------------|-------------------------------|
+| Popular for Solo dining                      | 0.44           | ↓ Strong Survival Driver      |
+| Service options Takeout                      | 0.12           | ↓ Strong Survival Driver      |
+| num of reviews                               | 0.09           | ↓ Strong Survival Driver      |
+| Atmosphere Casual                            | 0.05           | ↓ Strong Survival Driver      |
+| Amenities Good for kids                       | 0.04           | ↑ Strong Failure Driver       |
+| Service options Dine-in                       | 0.03           | ↓ Strong Survival Driver      |
+| Offerings Comfort food                        | 0.03           | ↑ Weak Failure Driver         |
+| Accessibility Wheelchair accessible entrance | 0.03           | ↓ Strong Survival Driver      |
+| price numeric                                | 0.02           | ↑ Weak Failure Driver         |
+| Planning Accepts reservations                | 0.02           | ↑ Weak Failure Driver         |
+| Payments Debit cards                          | 0.01           | ↑ Strong Failure Driver       |
+| Offerings Quick bite                          | 0.01           | ↓ Strong Survival Driver      |
+| Payments NFC mobile payments                  | 0.01           | ↓ Strong Survival Driver      |
+| avg rating                                   | 0.01           | ↓ Weak Survival Driver        |
+| Dining options Lunch                          | 0.01           | ↑ Weak Failure Driver         |
+
+**Interpretation:**  
+The model can reliably distinguish high-risk vs. low-risk restaurants. Features like *Popular for Solo dining* and *Takeout service options* are strong survival indicators, while amenities for kids or debit card payments are associated with higher failure risk. This enables actionable early interventions.
 
 ---
 
