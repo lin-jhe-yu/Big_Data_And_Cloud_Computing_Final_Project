@@ -1,3 +1,6 @@
+<img width="800" height="450" alt="Image" src="https://github.com/user-attachments/assets/d1ca36e8-8cff-4534-a70a-fda99b3882ab" />
+
+
 # Reviews to Risk: Modeling Business Closure and Neighborhood Ecosystems
 
 ## Executive Summary
