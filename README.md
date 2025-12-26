@@ -29,7 +29,7 @@ Applied across **California, New York, and Illinois**, the solution supports:
 * **Entrepreneurs and investors** evaluating market entry and location strategy
 * **Urban planners and analysts** monitoring commercial stability at the neighborhood level
 
-Overall, the platform shifts decision-making from reactive responses to closures toward **proactive, data-driven risk management and growth strategy**.
+Overall, the approach shifts decision-making from reactive responses to closures toward **proactive, data-driven risk management and growth strategy**.
 
 ### Technical Overview
 
@@ -72,10 +72,10 @@ We address three core questions:
 
 ## Key Business Insights
 
-### 1. Reviews Matter — But Not in the Obvious Way
+### 1. Reviews Matter — More Than Just Ratings
 
-* Average star rating has **more influence on survival** than raw sentiment alone
-* Many closed restaurants share operational issues, such as slow serving speed
+* Average ratings are strong predictors of restaurant survival, but the true value of reviews lies in the detailed and actionable insights they provide.
+* Reviews reveal operational challenges such as slow service, inconsistent quality, or limited offerings that are not apparent from ratings or sentiment alone.
 
 ### 2. Pricing Strategy Impacts Risk
 
@@ -104,7 +104,7 @@ These features appear in **75%+ of well-performing businesses**, making them str
 
 ### 1. Sentiment Modeling (Customer Voice at Scale)
 
-**Business goal:** Convert millions of unstructured customer reviews into **1 to 5 sentiment scores**.  
+**Business Goal:** Convert millions of unstructured customer reviews into **1 to 5 sentiment scores**.  
 
 * Implemented using **PySpark** for scalability
 * Data preparation:
@@ -131,16 +131,16 @@ We evaluated several predictive models using **TF-IDF** features and **BERT embe
 
 ---
 
-## 2. Restaurant Closure Prediction (Early Risk Detection)
+### 2. Restaurant Closure Prediction (Early Risk Detection)
 
 **Business Goal:** Predict the probability that a restaurant will permanently close, enabling proactive intervention months before closure.
 
-### Feature Groups
+#### Feature Groups
 - **Operational attributes:** Amenities, dining options
 - **Customer feedback metrics:** Ratings, sentiment score, review volume
 - **Pricing and population context**
 
-### Model Performance
+#### Model Performance
 | Model | AUC | Accuracy | F1 Score | Precision | Recall |
 |-------|-----|----------|----------|-----------|--------|
 | Logistic Regression | 0.959 | 0.894 | 0.904 | 0.933 | 0.894 |
@@ -149,7 +149,7 @@ We evaluated several predictive models using **TF-IDF** features and **BERT embe
 
 **Best Model:** Gradient Boosted Trees (GBT) — **AUC ≈ 0.972**
 
-### Feature Importance (GBT)
+#### Feature Importance (GBT)
 
 | Feature                                      | GBT Importance | Effect Direction               |
 |---------------------------------------------|----------------|-------------------------------|
@@ -170,58 +170,23 @@ We evaluated several predictive models using **TF-IDF** features and **BERT embe
 | Dining options Lunch                          | 0.01           | ↑ Weak Failure Driver         |
 
 **Interpretation:**  
-The model can reliably distinguish high-risk vs. low-risk restaurants. Features like *Popular for Solo dining* and *Takeout service options* are strong survival indicators, while amenities for kids or debit card payments are associated with higher failure risk. This enables actionable early interventions.
+The model can reliably distinguish high-risk vs. low-risk restaurants. Features like *Popular for Solo dining* and *Takeout service options* are strong survival indicators, while *Price numeric* and *Planning Accepts reservations* are associated with higher failure risk. This enables actionable early interventions.
 
 ---
 
 ### 3. Neighborhood & Ecosystem Analysis (Graph Analytics)
 
-Graph: Influence Ranking of Neighborhoods Using Business Performance
-
-**Business goal:** Understand how neighborhood dynamics influence restaurant success.
-
-* Bipartite graph: **Businesses ↔ Neighborhoods**
-* Edge weights combine:
-
-  * Ratings
-  * Review volume
-  * Sentiment score
-  * Survival probability
-  Edge Weight: 
-avg_rating × √(review_count) × (1 − closure_prob) 
-0.4 × shrunk_sentiment + 0.3 × rating + 0.3 × survival
-<img width="282" height="48" alt="image" src="https://github.com/user-attachments/assets/ece38835-81ad-4638-acc0-c035cb7edb18" />
-
-* PageRank identifies **high-influence neighborhoods** linked to resilient businesses
-
-**Outcome:** Location decisions can be informed not just by foot traffic, but by ecosystem health.
-
-Graph: Business Similarity Graph
-
-Operational Similarity
-Binary operational attributes: Atmosphere_Casual, Takeout, Solo_dining, etc.
-Similarity computed using Jaccard-like (1 − MinHash distance) 
-
-Performance Similarity
-Similarity score: 0.3 × (1 - Δavg_success_score) + 0.3 × (1- Δavg_sentiment) + 0.4 × (1 - Δavg_rating), where Δ is normalized_difference
-Recommendation score: 0.3 × pagerank + 0.5 × avg_success_score + 0.2 × normalized_total degree 
-<img width="633" height="112" alt="image" src="https://github.com/user-attachments/assets/c1ffab72-e69d-4bca-8ee0-cace3c93c096" />
-
-
-### 3. Neighborhood & Ecosystem Analysis (Graph Analytics)
-
-#### Objective
 **Business Goal:** Understand how neighborhood dynamics influence restaurant success and identify high-performing similar businesses for benchmarking.
 
 ---
 
-## 3.1 Neighborhood Influence Graph
+### 3.1 Neighborhood Influence Graph
 
 **Graph Type:** Bipartite graph (Businesses ↔ Neighborhoods)
 
 **Purpose:** Identify neighborhoods that disproportionately contribute to business resilience.
 
-### Edge Construction
+#### Edge Construction
 Edge weights capture performance and survival signals:
 
 - Average rating  
@@ -233,37 +198,36 @@ Edge weights capture performance and survival signals:
 - **Weight A:** `avg_rating * sqrt(review_count) * (1 - closure_prob)`  
 - **Weight B:** `0.4 * shrunk_sentiment + 0.3 * rating + 0.3 * survival`
 
-### Analysis Method
+#### Analysis Method
 - Apply **PageRank** to identify high-influence neighborhoods  
 - Highlight neighborhoods connected to resilient businesses
 
-<img width="800" height="450" alt="Image" src="https://github.com/user-attachments/assets/a0b1f73c-c6e6-47cd-9bae-e54e4c2d5fdd" />
+<img width="600" height="350" alt="Image" src="https://github.com/user-attachments/assets/a0b1f73c-c6e6-47cd-9bae-e54e4c2d5fdd" />
 
 **Key Insight:**  
 - Location decisions should consider ecosystem health, not just foot traffic.
 
 ---
 
-## 3.2 Business Similarity Graph
+### 3.2 Business Similarity Graph
 
 **Purpose:** Identify structurally and performance-wise similar businesses.
 
-### A. Operational Similarity
+#### A. Operational Similarity
 - Binary operational attributes (e.g., `Atmosphere_Casual`, `Takeout`, `Solo_dining`)  
 - Similarity metric: `1 - MinHash distance`
 
-### B. Performance Similarity
+#### B. Performance Similarity
 - Similarity score: `0.3 * (1 - Δavg_success_score) + 0.3 * (1 - Δavg_sentiment) + 0.4 * (1 - Δavg_rating)`  
 where `Δ` denotes normalized differences.
 - Recommendation Score: `0.3 * PageRank + 0.5 * avg_success_score + 0.2 * normalized_total_degree`
 
-<img width="600" height="600" alt="Image" src="https://github.com/user-attachments/assets/01c163a2-afc7-437d-9908-4298348d24e8" />
+<img width="400" height="400" alt="Image" src="https://github.com/user-attachments/assets/01c163a2-afc7-437d-9908-4298348d24e8" />
 
 **Key Insight:**  
 - Operationally similar businesses cluster together, revealing common service models.  
 - Performance similarity identifies high-performing peers with comparable ratings and sentiment.  
 - Combining PageRank and performance metrics yields a robust recommendation score for benchmarking and improvement.
-
 
 ---
 
